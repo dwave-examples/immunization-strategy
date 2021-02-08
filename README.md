@@ -8,6 +8,8 @@ To run the demo, type:
 
 ```python demo.py```
 
+Additional options are available to select different graphs to run the problem on. To see the full list of options, type `python demo.py -h`.
+
 During a successful run of the program, two images are produced and saved. The first is the original input graph, saved as `input_graph.png`.
 
 ![Example Input](readme_imgs/input_graph.png)
@@ -15,6 +17,16 @@ During a successful run of the program, two images are produced and saved. The f
 The second highlights the partition of the population into large groups (left and right) and separator (center).
 
 ![Example Output](readme_imgs/separator.png)
+
+### Graphs Available
+
+Several different types of graphs or networks are available for this demo using the options provided. These are all built using NetworkX graph generator functions, and the details of these functions can be found [here](https://networkx.org/documentation/stable//reference/generators.html#).
+
+- `karate`: Karate Club graph; a fixed graph on 33 nodes.
+- `internet`: Internet Autonomous System network; specify nodes between 1,000 and 10,000.
+- `rand-reg`: A random d-regular graph; specify number of nodes and value for d.
+- `ER`: Erdos-Renyi random graph; specify number of nodes and edge probability.
+- `SF`: Barabsi-Albert scale-free graph; specify number of nodes and number of edges to add from a new node to any existing nodes.
 
 ## Code Overview
 

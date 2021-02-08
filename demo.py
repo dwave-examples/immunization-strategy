@@ -28,8 +28,11 @@ def read_in_args():
 
     # Set up user-specified optional arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-g", "--graph", default='karate', choices=['karate', 'internet', 'HEP'], help='Graph to partition (default: %(default)s)')
-    parser.add_argument("-n", "--nodes", help="Set graph size for internet graph. Must be between 1000 and 10000. (default: %(default)s)", default=1000, type=int)
+    parser.add_argument("-g", "--graph", default='internet', choices=['karate', 'internet', 'rand-reg', 'ER', 'SF', 'HEP'], help='Graph to partition (default: %(default)s)')
+    parser.add_argument("-n", "--nodes", help="Set graph size for graph. (default: %(default)s)", default=1000, type=int)
+    parser.add_argument("-d", "--degree", help="Set node degree for random regular graph. (default: %(default)s)", default=4, type=int)
+    parser.add_argument("-p", "--prob", help="Set graph edge probability for ER graph. Must be between 0 and 1. (default: %(default)s)", default=0.25, type=float)
+    parser.add_argument("-e", "--new-edges", help="Set number of edges from new node to existing node in SF graph. (default: %(default)s)", default=4, type=int)
 
     args = parser.parse_args()
     
@@ -42,6 +45,28 @@ def read_in_args():
             print("\nSize for internet graph must be between 1000 and 10000.\nSetting size to 1000.\n")
         print("\nReading in internet graph of size", args.nodes, "...")
         G = nx.random_internet_as_graph(args.nodes)
+    elif args.graph == 'rand-reg':
+        if args.nodes < 1:
+            print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
+        if args.degree < 0 or args.degree >= args.nodes:
+            print("\nDegree must be between 0 and n.\nSetting size to 4.\n")
+            args.degree = 4
+        print("\nGenerating random regular graph...")
+        G = nx.random_regular_graph(4, args.nodes)
+    elif args.graph == 'ER':
+        if args.nodes < 1:
+            print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
+        if args.prob < 0 or args.prob > 1:
+            print("\nProbability must be between 0 and 1.\nSetting prob to 0.25.\n")
+        print("\nGenerating Erdos-Renyi graph...")
+        G = nx.erdos_renyi_graph(args.nodes, args.prob)
+    elif args.graph == 'SF':
+        if args.nodes < 1:
+            print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
+        if args.new_edges < 0 or args.new_edges > args.nodes:
+            print("\nNumber of edges must be between 1 and n.\nSetting to 5.\n")
+        print("\nGenerating Barabasi-Albert scale-free graph...")
+        G = nx.barabasi_albert_graph(args.nodes, args.new_edges)
     elif args.graph == 'HEP':
         print("\nReading in HEP graph (this will take a while)...")
         G = nx.read_pajek("hep-th-new.net")
@@ -137,6 +162,7 @@ def process_sample(G, sample):
 
     print("\nSeparator Fraction: \t", len(sep_group)/len(G.nodes()))
 
+    # Determines if there are any edges directly between the large groups
     illegal_edges = [(u, v) for u, v in G.edges if ({sample[u], sample[v]} == {0, 1})]
 
     print("\nNumber of illegal edges:\t", len(illegal_edges))
@@ -155,15 +181,15 @@ def visualize_results(G, group_1, group_2, sep_group, illegal_edges):
     pos_1 = nx.random_layout(G1, center=(-5,0))
     pos_2 = nx.random_layout(G2, center=(5,0))
     pos_sep = nx.random_layout(SG, center=(0,0))
-
-    # pos = nx.spring_layout(G)
     pos = {**pos_1, **pos_2, **pos_sep}
+
     nx.draw_networkx_nodes(G, pos_1, node_size=10, nodelist=group_1, node_color='#17bebb', edgecolors='k')
     nx.draw_networkx_nodes(G, pos_2, node_size=10, nodelist=group_2, node_color='#2a7de1', edgecolors='k')
     nx.draw_networkx_nodes(G, pos_sep, node_size=10, nodelist=sep_group, node_color='#f37820', edgecolors='k')
 
     nx.draw_networkx_edges(G, pos, edgelist=G.edges(), style='solid', edge_color='#808080')
     nx.draw_networkx_edges(G, pos, edgelist=illegal_edges, style='solid')
+
     plt.draw()
     plt.savefig('separator.png')
 
