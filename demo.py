@@ -15,114 +15,169 @@
 from dimod import DiscreteQuadraticModel
 from dwave.system import LeapHybridDQMSampler
 import networkx as nx
-import matplotlib.pyplot as plt
-import igraph as ig
+import argparse
+import matplotlib
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    matplotlib.use("agg")
+    import matplotlib.pyplot as plt
 
-print("\nReading in graph...")
+def read_in_args():
+    """ Read in user specified parameters or use defaults."""
 
-# Karate club graph: 33 nodes
-# G = nx.karate_club_graph()
+    # Set up user-specified optional arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-g", "--graph", default='karate', choices=['karate', 'internet', 'HEP'], help='Graph to partition (default: %(default)s)')
+    parser.add_argument("-n", "--nodes", help="Set graph size for internet graph. Must be between 1000 and 10000. (default: %(default)s)", default=1000, type=int)
 
-# Internet AS network graph
-G = nx.random_internet_as_graph(1000)
+    args = parser.parse_args()
+    
+    if args.graph == 'karate':
+        print("\nReading in karate graph...")
+        G = nx.karate_club_graph()
+    elif args.graph == 'internet':
+        if args.nodes < 1000 or args.nodes > 10000:
+            args.nodes = 1000
+            print("\nSize for internet graph must be between 1000 and 10000.\nSetting size to 1000.\n")
+        print("\nReading in internet graph of size", args.nodes, "...")
+        G = nx.random_internet_as_graph(args.nodes)
+    elif args.graph == 'HEP':
+        print("\nReading in HEP graph (this will take a while)...")
+        G = nx.read_pajek("hep-th-new.net")
 
-# HEP graph (HUGE and slow)
-# G = nx.read_pajek("hep-th-new.net")
+    return G
 
 # Visualize the input graph
-g1 = ig.Graph(len(G), list(zip(*list(zip(*nx.to_edgelist(G)))[:2])))
-layout = g1.layout("kk")
-visual_style = {}
-visual_style["vertex_size"] = 10
-visual_style["edge_color"] = ["gray"]
-ig.plot(g1, "input_graph.png", **visual_style)
+def visualize_input_graph(G):
+    """ Visualize graph to be partitioned."""
 
-# Two groups (cases 0, 1) and one separator group (case 2)
-num_groups = 3
+    pos = nx.spring_layout(G)
+    nx.draw_networkx_nodes(G, pos, node_size=20, node_color='r', edgecolors='k')
+    nx.draw_networkx_edges(G, pos, edgelist=G.edges(), style='solid', edge_color='#808080')
+    plt.draw()
+    plt.savefig('input_graph.png')
+    plt.close()
 
-# Lagrange parameter on constraint
-gamma = 1
+def build_dqm(G):
+    """ Build the DQM for the problem instance."""
 
-# Initialize the DQM object
-print("\nBuilding DQM...")
-dqm = DiscreteQuadraticModel()
+    # Two groups (cases 0, 1) and one separator group (case 2)
+    num_groups = 3
 
-# Build the DQM starting by adding variables
-for name in G.nodes():
-    dqm.add_variable(num_groups, label=name)
+    # Lagrange parameter on constraints
+    gamma_1 = 1
+    gamma2 = 100
 
-# Add objective to DQM
-for name in G.nodes():
-    dqm.set_linear_case(name, 2, 1)
+    # Initialize the DQM object
+    print("\nBuilding DQM...")
+    dqm = DiscreteQuadraticModel()
 
-# Add constraint to DQM: |G1|=|G2|
-all_nodes_ordered = list(G.nodes())
-# print(all_nodes_ordered[0])
-for i in range(len(all_nodes_ordered)):
-    dqm.set_linear_case(all_nodes_ordered[i], 0, gamma)
-    dqm.set_linear_case(all_nodes_ordered[i], 1, gamma)
-    for j in range(i+1, len(all_nodes_ordered)):
-        dqm.set_quadratic_case(all_nodes_ordered[i], 0, all_nodes_ordered[j], 0, 2*gamma)
-        dqm.set_quadratic_case(all_nodes_ordered[i], 1, all_nodes_ordered[j], 1, 2*gamma)
-        dqm.set_quadratic_case(all_nodes_ordered[i], 0, all_nodes_ordered[j], 1, -2*gamma)
-        dqm.set_quadratic_case(all_nodes_ordered[i], 1, all_nodes_ordered[j], 0, -2*gamma)
+    # Build the DQM starting by adding variables
+    for name in G.nodes():
+        dqm.add_variable(num_groups, label=name)
 
-# Add constraint to DQM: e(G1, G2) = 0
-gamma2 = 100
-for a, b in G.edges():
-    if a != b:
-        dqm.set_quadratic_case(a, 0, b, 1, gamma2)
-        dqm.set_quadratic_case(a, 1, b, 0, gamma2)
+    # Add objective to DQM
+    for name in G.nodes():
+        dqm.set_linear_case(name, 2, 1)
 
-# Initialize the DQM solver
-print("\nSending to the DQM solver...")
-sampler = LeapHybridDQMSampler()
+    # Add constraint to DQM: |G1|=|G2|
+    all_nodes_ordered = list(G.nodes())
+    for i in range(len(all_nodes_ordered)):
+        dqm.set_linear_case(all_nodes_ordered[i], 0, gamma_1)
+        dqm.set_linear_case(all_nodes_ordered[i], 1, gamma_1)
+        for j in range(i+1, len(all_nodes_ordered)):
+            dqm.set_quadratic_case(all_nodes_ordered[i], 0, all_nodes_ordered[j], 0, 2*gamma_1)
+            dqm.set_quadratic_case(all_nodes_ordered[i], 1, all_nodes_ordered[j], 1, 2*gamma_1)
+            dqm.set_quadratic_case(all_nodes_ordered[i], 0, all_nodes_ordered[j], 1, -2*gamma_1)
+            dqm.set_quadratic_case(all_nodes_ordered[i], 1, all_nodes_ordered[j], 0, -2*gamma_1)
 
-# Solve the problem using the DQM solver
-sampleset = sampler.sample_dqm(dqm, label='Example - Immunization Strategy')
+    # Add constraint to DQM: e(G1, G2) = 0
+    for a, b in G.edges():
+        if a != b:
+            dqm.set_quadratic_case(a, 0, b, 1, gamma2)
+            dqm.set_quadratic_case(a, 1, b, 0, gamma2)
 
-# Get the first solution, and print it
-sample = sampleset.first.sample
-energy = sampleset.first.energy
+    return dqm
 
-# Visualize output
-print("\nVisualizing output...")
-group_1 = []
-group_2 = []
-sep_group = []
-for key, val in sample.items():
-    if val == 0:
-        group_1.append(key)
-    elif val == 1:
-        group_2.append(key)
-    else:
-        sep_group.append(key)
+def run_dqm_and_collect_solutions(dqm, sampler):
+    """ Send the DQM to the sampler and return the best sample found."""
 
-# Display best result
-print("\nPartition Found:")
-print("\tGroup 1: \tSize", len(group_1))
-print("\tGroup 2: \tSize", len(group_2))
-print("\tSeparator: \tSize", len(sep_group))
+    # Initialize the solver
+    print("\nSending to the solver...")
+    
+    # Solve the DQM problem using the solver
+    sampleset = sampler.sample_dqm(dqm, label='Example - Immunization Strategy')
 
-illegal_edges = [(u, v) for u, v in G.edges if ({sample[u], sample[v]} == {0, 1})]
+    # Get the first solution, and print it
+    sample = sampleset.first.sample
 
-print("\nNumber of illegal edges:\t", len(illegal_edges))
+    return sample
 
-G1 = G.subgraph(group_1)
-G2 = G.subgraph(group_2)
-SG = G.subgraph(sep_group)
+def process_sample(G, sample):
+    """ Interpret the DQM solution in terms of the partitioning problem."""
 
-pos_1 = nx.random_layout(G1, center=(-5,0))
-pos_2 = nx.random_layout(G2, center=(5,0))
-pos_sep = nx.random_layout(SG, center=(0,0))
+    # Display results to user
+    group_1 = []
+    group_2 = []
+    sep_group = []
+    for key, val in sample.items():
+        if val == 0:
+            group_1.append(key)
+        elif val == 1:
+            group_2.append(key)
+        else:
+            sep_group.append(key)
 
-# pos = nx.spring_layout(G)
-pos = {**pos_1, **pos_2, **pos_sep}
-nx.draw_networkx_nodes(G, pos_1, node_size=10, nodelist=group_1, node_color='#17bebb', edgecolors='k')
-nx.draw_networkx_nodes(G, pos_2, node_size=10, nodelist=group_2, node_color='#2a7de1', edgecolors='k')
-nx.draw_networkx_nodes(G, pos_sep, node_size=10, nodelist=sep_group, node_color='#f37820', edgecolors='k')
+    # Display best result
+    print("\nPartition Found:")
+    print("\tGroup 1: \tSize", len(group_1))
+    print("\tGroup 2: \tSize", len(group_2))
+    print("\tSeparator: \tSize", len(sep_group))
 
-nx.draw_networkx_edges(G, pos, edgelist=G.edges(), style='solid', edge_color='#808080')
-nx.draw_networkx_edges(G, pos, edgelist=illegal_edges, style='solid')
-plt.draw()
-plt.savefig('separator.png')
+    print("\nSeparator Fraction: \t", len(sep_group)/len(G.nodes()))
+
+    illegal_edges = [(u, v) for u, v in G.edges if ({sample[u], sample[v]} == {0, 1})]
+
+    print("\nNumber of illegal edges:\t", len(illegal_edges))
+
+    return group_1, group_2, sep_group, illegal_edges
+
+def visualize_results(G, group_1, group_2, sep_group, illegal_edges):
+    """ Visualize the partition."""
+
+    print("\nVisualizing output...")
+
+    G1 = G.subgraph(group_1)
+    G2 = G.subgraph(group_2)
+    SG = G.subgraph(sep_group)
+
+    pos_1 = nx.random_layout(G1, center=(-5,0))
+    pos_2 = nx.random_layout(G2, center=(5,0))
+    pos_sep = nx.random_layout(SG, center=(0,0))
+
+    # pos = nx.spring_layout(G)
+    pos = {**pos_1, **pos_2, **pos_sep}
+    nx.draw_networkx_nodes(G, pos_1, node_size=10, nodelist=group_1, node_color='#17bebb', edgecolors='k')
+    nx.draw_networkx_nodes(G, pos_2, node_size=10, nodelist=group_2, node_color='#2a7de1', edgecolors='k')
+    nx.draw_networkx_nodes(G, pos_sep, node_size=10, nodelist=sep_group, node_color='#f37820', edgecolors='k')
+
+    nx.draw_networkx_edges(G, pos, edgelist=G.edges(), style='solid', edge_color='#808080')
+    nx.draw_networkx_edges(G, pos, edgelist=illegal_edges, style='solid')
+    plt.draw()
+    plt.savefig('separator.png')
+
+if __name__ == '__main__':
+
+    G = read_in_args()
+
+    visualize_input_graph(G)
+
+    dqm = build_dqm(G)
+
+    sampler = LeapHybridDQMSampler()
+    sample = run_dqm_and_collect_solutions(dqm, sampler)
+
+    group_1, group_2, sep_group, illegal_edges = process_sample(G, sample)
+
+    visualize_results(G, group_1, group_2, sep_group, illegal_edges)
