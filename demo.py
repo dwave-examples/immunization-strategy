@@ -16,6 +16,7 @@ from dimod import DiscreteQuadraticModel
 from dwave.system import LeapHybridDQMSampler
 import networkx as nx
 import argparse
+import sys
 import matplotlib
 try:
     import matplotlib.pyplot as plt
@@ -23,8 +24,8 @@ except ImportError:
     matplotlib.use("agg")
     import matplotlib.pyplot as plt
 
-def read_in_args():
-    """ Read in user specified parameters or use defaults."""
+def read_in_args(args):
+    """ Read in user specified parameters."""
 
     # Set up user-specified optional arguments
     parser = argparse.ArgumentParser()
@@ -34,8 +35,12 @@ def read_in_args():
     parser.add_argument("-p", "--prob", help="Set graph edge probability for ER graph. Must be between 0 and 1. (default: %(default)s)", default=0.25, type=float)
     parser.add_argument("-e", "--new-edges", help="Set number of edges from new node to existing node in SF graph. (default: %(default)s)", default=4, type=int)
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+def build_graph(args):
+    """ Builds graph from user specified parameters or use defaults."""
     
+    # Build graph using networkx
     if args.graph == 'karate':
         print("\nReading in karate graph...")
         G = nx.karate_club_graph()
@@ -195,7 +200,9 @@ def visualize_results(G, group_1, group_2, sep_group, illegal_edges):
 
 if __name__ == '__main__':
 
-    G = read_in_args()
+    args = read_in_args(sys.argv[1:])
+
+    G = build_graph(args)
 
     visualize_input_graph(G)
 
