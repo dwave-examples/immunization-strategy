@@ -67,9 +67,9 @@ def read_in_args():
             print("\nNumber of edges must be between 1 and n.\nSetting to 5.\n")
         print("\nGenerating Barabasi-Albert scale-free graph...")
         G = nx.barabasi_albert_graph(args.nodes, args.new_edges)
-    elif args.graph == 'HEP':
-        print("\nReading in HEP graph (this will take a while)...")
-        G = nx.read_pajek("hep-th-new.net")
+    else:
+        print("\nReading in karate graph...")
+        G = nx.karate_club_graph()
 
     return G
 
