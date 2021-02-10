@@ -35,7 +35,7 @@ def read_in_args(args):
     parser.add_argument("-p", "--prob", help="Set graph edge probability for ER graph. Must be between 0 and 1. (default: %(default)s)", default=0.25, type=float)
     parser.add_argument("-e", "--new-edges", help="Set number of edges from new node to existing node in SF graph. (default: %(default)s)", default=4, type=int)
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 def build_graph(args):
     """ Builds graph from user specified parameters or use defaults."""
