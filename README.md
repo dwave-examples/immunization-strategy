@@ -22,7 +22,7 @@ The second highlights the partition of the population into large groups (left an
 
 Several different types of graphs or networks are available for this demo using the options provided. These are all built using NetworkX graph generator functions, and the details of these functions can be found [here](https://networkx.org/documentation/stable//reference/generators.html#).
 
-- `karate`: Karate Club graph; a fixed graph on 33 nodes.
+- `karate`: Karate Club graph; a fixed graph on 34 nodes.
 - `internet`: Internet Autonomous System network; specify nodes between 1,000 and 10,000.
 - `rand-reg`: A random d-regular graph; specify number of nodes and value for d.
 - `ER`: Erdos-Renyi random graph; specify number of nodes and edge probability.

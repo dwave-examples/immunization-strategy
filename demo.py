@@ -54,22 +54,38 @@ def build_graph(args):
         if args.nodes < 1:
             print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
         if args.degree < 0 or args.degree >= args.nodes:
-            print("\nDegree must be between 0 and n.\nSetting size to 4.\n")
-            args.degree = 4
+            print("\nDegree must be between 0 and n. Setting size to min(4, n).\n")
+            args.degree = min(4, args.nodes)
+        if args.degree*args.nodes % 2 == 1:
+            print("\nRequirement: n*d must be even.\n")
+            if args.degree > 0:
+                print("\nSetting degree to", args.degree-1, "\n")
+                args.degree -= 1
+            elif args.nodes-1 > args.degree:
+                print("\nSetting nodes to", args.nodes-1, "\n")
+                args.nodes -= 1
+            else:
+                print("\nSetting nodes to 1000 and degree to 4.\n")
+                args.nodes = 1000
+                args.degree = 4
         print("\nGenerating random regular graph...")
-        G = nx.random_regular_graph(4, args.nodes)
+        G = nx.random_regular_graph(args.degree, args.nodes)
     elif args.graph == 'ER':
         if args.nodes < 1:
-            print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
+            print("\nMust have at least one node in the graph. Setting size to 1000.\n")
+            args.nodes = 1000
         if args.prob < 0 or args.prob > 1:
-            print("\nProbability must be between 0 and 1.\nSetting prob to 0.25.\n")
+            print("\nProbability must be between 0 and 1. Setting prob to 0.25.\n")
+            args.prob = 0.25
         print("\nGenerating Erdos-Renyi graph...")
         G = nx.erdos_renyi_graph(args.nodes, args.prob)
     elif args.graph == 'SF':
         if args.nodes < 1:
-            print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
+            print("\nMust have at least one node in the graph. Setting size to 1000.\n")
+            args.nodes = 1000
         if args.new_edges < 0 or args.new_edges > args.nodes:
-            print("\nNumber of edges must be between 1 and n.\nSetting to 5.\n")
+            print("\nNumber of edges must be between 1 and n. Setting to 5.\n")
+            args.new_edges = 5
         print("\nGenerating Barabasi-Albert scale-free graph...")
         G = nx.barabasi_albert_graph(args.nodes, args.new_edges)
     else:
