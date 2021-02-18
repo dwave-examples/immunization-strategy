@@ -41,3 +41,7 @@ This problem can be modeled as a discrete quadratic model (DQM). We assign a var
 ## References
 
 [1] Chen, Yiping, et al. "Finding a better immunization strategy." Physical review letters 101.5 (2008): 058701.
+
+## License
+
+Released under the Apache License 2.0. See [LICENSE](LICENSE) file.
