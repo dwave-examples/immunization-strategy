@@ -59,11 +59,11 @@ def build_graph(args):
         if args.degree*args.nodes % 2 == 1:
             print("\nRequirement: n*d must be even.\n")
             if args.degree > 0:
-                print("\nSetting degree to", args.degree-1, "\n")
                 args.degree -= 1
+                print("\nSetting degree to", args.degree, "\n")
             elif args.nodes-1 > args.degree:
-                print("\nSetting nodes to", args.nodes-1, "\n")
                 args.nodes -= 1
+                print("\nSetting nodes to", args.nodes, "\n")
             else:
                 print("\nSetting nodes to 1000 and degree to 4.\n")
                 args.nodes = 1000
@@ -113,7 +113,7 @@ def build_dqm(G):
 
     # Lagrange parameter on constraints
     gamma_1 = 1
-    gamma2 = 100
+    gamma_2 = 100
 
     # Initialize the DQM object
     print("\nBuilding DQM...")
@@ -141,8 +141,8 @@ def build_dqm(G):
     # Add constraint to DQM: e(G1, G2) = 0
     for a, b in G.edges():
         if a != b:
-            dqm.set_quadratic_case(a, 0, b, 1, gamma2)
-            dqm.set_quadratic_case(a, 1, b, 0, gamma2)
+            dqm.set_quadratic_case(a, 0, b, 1, gamma_2)
+            dqm.set_quadratic_case(a, 1, b, 0, gamma_2)
 
     return dqm
 
@@ -155,7 +155,7 @@ def run_dqm_and_collect_solutions(dqm, sampler):
     # Solve the DQM problem using the solver
     sampleset = sampler.sample_dqm(dqm, label='Example - Immunization Strategy')
 
-    # Get the first solution, and print it
+    # Get the first solution
     sample = sampleset.first.sample
 
     return sample
@@ -212,7 +212,10 @@ def visualize_results(G, group_1, group_2, sep_group, illegal_edges):
     nx.draw_networkx_edges(G, pos, edgelist=illegal_edges, style='solid')
 
     plt.draw()
-    plt.savefig('separator.png')
+    output_name = 'separator.png'
+    plt.savefig(output_name)
+
+    print("\tOutput stored in", output_name)
 
 if __name__ == '__main__':
 
