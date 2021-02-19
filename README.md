@@ -60,7 +60,8 @@ functions, and the details of these functions can be found
 - `SF`: Barabsi-Albert scale-free graph; specify number of nodes and number of
   edges to add from a new node to any existing nodes.
 
-The default graph is the internet graph on 1,000 nodes.
+The default graph is the internet graph on 1,000 nodes. The largest number of 
+nodes allowed for any graph specified can be at most 5,000.
 
 ## Code Overview
 
