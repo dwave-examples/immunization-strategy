@@ -41,7 +41,7 @@ class TestDemo(unittest.TestCase):
         self.assertEqual(len(G.nodes()), 1000)
 
     def test_internet_graph_too_big(self):
-        args = demo.read_in_args(["--graph", "internet", "--nodes", "100001", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
+        args = demo.read_in_args(["--graph", "internet", "--nodes", "5001", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
         G = demo.build_graph(args)
         self.assertEqual(len(G.nodes()), 1000)
 

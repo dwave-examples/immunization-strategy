@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from dimod import DiscreteQuadraticModel
-from dwave.system import LeapHybridDQMSampler
-import networkx as nx
 import argparse
 import sys
 import matplotlib
+import networkx as nx
+from dimod import DiscreteQuadraticModel
+from dwave.system import LeapHybridDQMSampler
+
 try:
     import matplotlib.pyplot as plt
 except ImportError:
@@ -54,8 +55,8 @@ def build_graph(args):
         if args.nodes < 1:
             print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
         if args.degree < 0 or args.degree >= args.nodes:
-            print("\nDegree must be between 0 and n. Setting size to min(4, n).\n")
-            args.degree = min(4, args.nodes)
+            print("\nDegree must be between 0 and n-1. Setting size to min(4, n-1).\n")
+            args.degree = min(4, args.nodes-1)
         if args.degree*args.nodes % 2 == 1:
             print("\nRequirement: n*d must be even.\n")
             if args.degree > 0:
