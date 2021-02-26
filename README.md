@@ -23,16 +23,12 @@ discrete quadratic model solver available in Leap.
 
 To run the demo, type:
 
-```bash
-python demo.py
-```
+```python demo.py```
 
 Additional options are available to select different graphs to run the problem
 on. To see the full list of options, type:
 
-```bash
-python demo.py -h
-```
+```python demo.py -h```
 
 During a successful run of the program, two images are produced and saved. The
 first is the original input graph, saved as `input_graph.png`.
@@ -56,7 +52,7 @@ functions, and the details of these functions can be found
   between 1,000 and 5,000.
 - `rand-reg`: A random d-regular graph; specify number of nodes and value for d.
 - `ER`: Erdos-Renyi random graph; specify number of nodes and edge probability.
-- `SF`: Barabsi-Albert scale-free graph; specify number of nodes and number of
+- `SF`: Barabasi-Albert scale-free graph; specify number of nodes and number of
   edges to add from a new node to any existing nodes.
 
 The default graph is the internet graph on 1,000 nodes. The largest number of 
