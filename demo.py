@@ -30,7 +30,7 @@ def read_in_args(args):
 
     # Set up user-specified optional arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-g", "--graph", default='internet', choices=['karate', 'internet', 'rand-reg', 'ER', 'SF', 'HEP'], help='Graph to partition (default: %(default)s)')
+    parser.add_argument("-g", "--graph", default='internet', choices=['karate', 'internet', 'rand-reg', 'ER', 'SF'], help='Graph to partition (default: %(default)s)')
     parser.add_argument("-n", "--nodes", help="Set graph size for graph. (default: %(default)s)", default=1000, type=int)
     parser.add_argument("-d", "--degree", help="Set node degree for random regular graph. (default: %(default)s)", default=4, type=int)
     parser.add_argument("-p", "--prob", help="Set graph edge probability for ER graph. Must be between 0 and 1. (default: %(default)s)", default=0.25, type=float)
