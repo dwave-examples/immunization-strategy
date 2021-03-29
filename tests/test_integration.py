@@ -62,7 +62,7 @@ class TestDemo(unittest.TestCase):
 
     def test_illegal_edges(self):
         """Run demo.py and check that no illegal edges are reported. This ensures the lagrange parameter is set appropriately."""
-        args = demo.read_in_args(["--graph", "karate"])
+        args = demo.read_in_args(["--graph", "internet"])
         G = demo.build_graph(args)
         dqm = demo.build_dqm(G)
         sampler = LeapHybridDQMSampler()
