@@ -24,6 +24,9 @@ workflows:
                 - master
                 - main
     jobs:
-      - dwave/test-linux
-      - dwave/test-osx
-      - dwave/test-win
+      - dwave/test-linux:
+          dwave-log-level: "debug"
+      - dwave/test-osx:
+          dwave-log-level: "debug"
+      - dwave/test-win:
+          dwave-log-level: "debug"
