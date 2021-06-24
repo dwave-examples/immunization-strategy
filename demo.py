@@ -48,7 +48,7 @@ def build_graph(args):
     elif args.graph == 'internet':
         if args.nodes < 1000 or args.nodes > 3000:
             args.nodes = 1000
-            print("\nSize for internet graph must be between 1000 and 5000.\nSetting size to 1000.\n")
+            print("\nSize for internet graph must be between 1000 and 3000.\nSetting size to 1000.\n")
         print("\nReading in internet graph of size", args.nodes, "...")
         G = nx.random_internet_as_graph(args.nodes)
     elif args.graph == 'rand-reg':
