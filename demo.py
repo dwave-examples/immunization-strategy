@@ -46,7 +46,7 @@ def build_graph(args):
         print("\nReading in karate graph...")
         G = nx.karate_club_graph()
     elif args.graph == 'internet':
-        if args.nodes < 1000 or args.nodes > 5000:
+        if args.nodes < 1000 or args.nodes > 3000:
             args.nodes = 1000
             print("\nSize for internet graph must be between 1000 and 5000.\nSetting size to 1000.\n")
         print("\nReading in internet graph of size", args.nodes, "...")
