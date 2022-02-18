@@ -17,7 +17,7 @@ the separator then breaks the transmission cycle, and so selecting a separator
 that contains as few individuals as possible will minimize the number of
 immunization doses required. In this example, we show how this optimization
 problem can be implemented using the Ocean SDK and solved using the hybrid
-discrete quadratic model solver available in Leap.
+discrete or constrained quadratic model solvers available in Leap.
 
 ## Usage
 
@@ -67,10 +67,11 @@ broken down into the following objective and constraints.
 - Constraint 1: Large groups have equal size
 - Constraint 2: No edges between the large groups
 
-This problem can be modeled as a discrete quadratic model (DQM). We assign a
-variable for each node in the graph, and each variable has three cases: one for
-each large group and one for the separator group. A variable can be assigned to
-exactly one of those three groups.
+This problem can be modeled as a discrete quadratic model (DQM) or a 
+constrained quadratic model (CQM). We assign a variable for each node in the 
+graph, and each variable has three cases: one for each large group and one for 
+the separator group. A variable can be assigned to exactly one of those three 
+groups.
 
 ## References
 

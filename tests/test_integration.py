@@ -17,7 +17,8 @@ import subprocess
 import sys
 import unittest
 import demo
-from dwave.system import LeapHybridDQMSampler
+import demo_cqm
+from dwave.system import LeapHybridDQMSampler, LeapHybridCQMSampler
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -69,6 +70,57 @@ class TestDemo(unittest.TestCase):
         sample = demo.run_dqm_and_collect_solutions(dqm, sampler)
 
         group_1, group_2, sep_group, illegal_edges = demo.process_sample(G, sample)
+
+        self.assertEqual(len(illegal_edges), 0)
+
+class TestCQMDemo(unittest.TestCase):
+
+    def test_smoke(self):
+        """run demo_cqm.py and check that nothing crashes"""
+
+        demo_file = os.path.join(project_dir, 'demo_cqm.py')
+        subprocess.check_output([sys.executable, demo_file])
+
+    # Test that the graph edge case constructions are caught
+    def test_karate_graph(self):
+        args = demo_cqm.read_in_args(["--graph", "karate", "--nodes", "1", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
+        G = demo_cqm.build_graph(args)
+        self.assertEqual(len(G.nodes()), 34)
+
+    def test_internet_graph_too_small(self):
+        args = demo_cqm.read_in_args(["--graph", "internet", "--nodes", "1", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
+        G = demo_cqm.build_graph(args)
+        self.assertEqual(len(G.nodes()), 1000)
+
+    def test_internet_graph_too_big(self):
+        args = demo_cqm.read_in_args(["--graph", "internet", "--nodes", "5001", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
+        G = demo_cqm.build_graph(args)
+        self.assertEqual(len(G.nodes()), 1000)
+
+    def test_rr_graph(self):
+        args = demo_cqm.read_in_args(["--graph", "rand-reg", "--nodes", "1", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
+        G = demo_cqm.build_graph(args)
+        self.assertEqual(len(G.nodes()), 1)
+
+    def test_er_graph(self):
+        args = demo_cqm.read_in_args(["--graph", "ER", "--nodes", "0", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
+        G = demo_cqm.build_graph(args)
+        self.assertEqual(len(G.nodes()), 1000)
+
+    def test_sf_graph(self):
+        args = demo_cqm.read_in_args(["--graph", "SF", "--nodes", "0", "--degree", "3", "--prob", "1.2", "--new-edges", "1001"])
+        G = demo_cqm.build_graph(args)
+        self.assertEqual(len(G.nodes()), 1000)
+
+    def test_illegal_edges(self):
+        """Run demo_cqm.py and check that no illegal edges are reported. This ensures that feasible solutions are found."""
+        args = demo_cqm.read_in_args(["--graph", "internet"])
+        G = demo_cqm.build_graph(args)
+        cqm = demo_cqm.build_cqm(G)
+        sampler = LeapHybridCQMSampler()
+        sample = demo_cqm.run_cqm_and_collect_solutions(cqm, sampler)
+
+        _, _, _, illegal_edges = demo_cqm.process_sample(G, sample)
 
         self.assertEqual(len(illegal_edges), 0)
 
