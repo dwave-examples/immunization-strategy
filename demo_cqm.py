@@ -112,7 +112,7 @@ def build_cqm(G):
     # Two groups (cases 0, 1) and one separator group (case 2)
     num_groups = 3
 
-    # Initialize the DQM object
+    # Initialize the CQM object
     print("\nBuilding CQM...")
     cqm = CQM()
 
