@@ -56,7 +56,7 @@ functions, and the details of these functions can be found
   edges to add from a new node to any existing nodes.
 
 The default graph is the internet graph on 1,000 nodes. The largest number of 
-nodes allowed for any graph specified can be at most 5,000.
+nodes allowed for any graph specified can be at most 5,000 (DQM) or 1,666 (CQM).
 
 ## Code Overview
 

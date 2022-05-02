@@ -40,20 +40,22 @@ def read_in_args(args):
 
 def build_graph(args):
     """ Builds graph from user specified parameters or use defaults."""
+
+    max_vars = int(5000/3)
     
     # Build graph using networkx
     if args.graph == 'karate':
         print("\nReading in karate graph...")
         G = nx.karate_club_graph()
     elif args.graph == 'internet':
-        if args.nodes < 1000 or args.nodes > 5000:
+        if args.nodes < 1000 or args.nodes > max_vars:
             args.nodes = 1000
-            print("\nSize for internet graph must be between 1000 and 5000.\nSetting size to 1000.\n")
+            print("\nSize for internet graph must be between 1000 and " + str(max_vars) + ". Setting size to 1000.\n")
         print("\nReading in internet graph of size", args.nodes, "...")
         G = nx.random_internet_as_graph(args.nodes)
     elif args.graph == 'rand-reg':
-        if args.nodes < 1:
-            print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
+        if args.nodes < 1 or args.nodes > max_vars:
+            print("\nSize for random regular graph must be between 1 and " + str(max_vars) + ". Setting size to 1000.\n")
         if args.degree < 0 or args.degree >= args.nodes:
             print("\nDegree must be between 0 and n-1. Setting size to min(4, n-1).\n")
             args.degree = min(4, args.nodes-1)
@@ -72,8 +74,8 @@ def build_graph(args):
         print("\nGenerating random regular graph...")
         G = nx.random_regular_graph(args.degree, args.nodes)
     elif args.graph == 'ER':
-        if args.nodes < 1:
-            print("\nMust have at least one node in the graph. Setting size to 1000.\n")
+        if args.nodes < 1 or args.nodes > max_vars:
+            print("\nSize for ER graph must be between 1 and " + str(max_vars) + ". Setting size to 1000.\n")
             args.nodes = 1000
         if args.prob < 0 or args.prob > 1:
             print("\nProbability must be between 0 and 1. Setting prob to 0.25.\n")
@@ -81,8 +83,8 @@ def build_graph(args):
         print("\nGenerating Erdos-Renyi graph...")
         G = nx.erdos_renyi_graph(args.nodes, args.prob)
     elif args.graph == 'SF':
-        if args.nodes < 1:
-            print("\nMust have at least one node in the graph. Setting size to 1000.\n")
+        if args.nodes < 1 or args.nodes > max_vars:
+            print("\nSize for SF graph must be between 1 and " + str(max_vars) + ". Setting size to 1000.\n")
             args.nodes = 1000
         if args.new_edges < 0 or args.new_edges > args.nodes:
             print("\nNumber of edges must be between 1 and n. Setting to 5.\n")
