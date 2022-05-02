@@ -16,7 +16,7 @@ import argparse
 import sys
 import matplotlib
 import networkx as nx
-from dimod import CQM, Binary, quicksum
+from dimod import ConstrainedQuadraticModel, Binary, quicksum
 from dwave.system import LeapHybridCQMSampler
 
 try:
@@ -116,7 +116,7 @@ def build_cqm(G):
 
     # Initialize the CQM object
     print("\nBuilding CQM...")
-    cqm = CQM()
+    cqm = ConstrainedQuadraticModel()
 
     # Build the CQM starting by creating variables
     vars = [[Binary(f'x_{name}_{i}') for i in range(num_groups)] for name in G.nodes()]
