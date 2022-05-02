@@ -49,7 +49,7 @@ functions, and the details of these functions can be found
 
 - `karate`: Karate Club graph; a fixed graph on 34 nodes.
 - `internet`: Internet Autonomous System network; specify number of nodes 
-  between 1,000 and 5,000.
+  between 1,000 and 3,000.
 - `rand-reg`: A random d-regular graph; specify number of nodes and value for d.
 - `ER`: Erdos-Renyi random graph; specify number of nodes and edge probability.
 - `SF`: Barabasi-Albert scale-free graph; specify number of nodes and number of
