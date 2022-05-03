@@ -16,8 +16,8 @@ import argparse
 import sys
 import matplotlib
 import networkx as nx
-from dimod import DiscreteQuadraticModel
-from dwave.system import LeapHybridDQMSampler
+from dimod import ConstrainedQuadraticModel, Binary, quicksum
+from dwave.system import LeapHybridCQMSampler
 
 try:
     import matplotlib.pyplot as plt
@@ -40,20 +40,22 @@ def read_in_args(args):
 
 def build_graph(args):
     """ Builds graph from user specified parameters or use defaults."""
+
+    max_vars = int(5000/3)
     
     # Build graph using networkx
     if args.graph == 'karate':
         print("\nReading in karate graph...")
         G = nx.karate_club_graph()
     elif args.graph == 'internet':
-        if args.nodes < 1000 or args.nodes > 3000:
+        if args.nodes < 1000 or args.nodes > max_vars:
             args.nodes = 1000
-            print("\nSize for internet graph must be between 1000 and 3000.\nSetting size to 1000.\n")
+            print("\nSize for internet graph must be between 1000 and " + str(max_vars) + ". Setting size to 1000.\n")
         print("\nReading in internet graph of size", args.nodes, "...")
         G = nx.random_internet_as_graph(args.nodes)
     elif args.graph == 'rand-reg':
-        if args.nodes < 1:
-            print("\nMust have at least one node in the graph.\nSetting size to 1000.\n")
+        if args.nodes < 1 or args.nodes > max_vars:
+            print("\nSize for random regular graph must be between 1 and " + str(max_vars) + ". Setting size to 1000.\n")
         if args.degree < 0 or args.degree >= args.nodes:
             print("\nDegree must be between 0 and n-1. Setting size to min(4, n-1).\n")
             args.degree = min(4, args.nodes-1)
@@ -72,8 +74,8 @@ def build_graph(args):
         print("\nGenerating random regular graph...")
         G = nx.random_regular_graph(args.degree, args.nodes)
     elif args.graph == 'ER':
-        if args.nodes < 1:
-            print("\nMust have at least one node in the graph. Setting size to 1000.\n")
+        if args.nodes < 1 or args.nodes > max_vars:
+            print("\nSize for ER graph must be between 1 and " + str(max_vars) + ". Setting size to 1000.\n")
             args.nodes = 1000
         if args.prob < 0 or args.prob > 1:
             print("\nProbability must be between 0 and 1. Setting prob to 0.25.\n")
@@ -81,8 +83,8 @@ def build_graph(args):
         print("\nGenerating Erdos-Renyi graph...")
         G = nx.erdos_renyi_graph(args.nodes, args.prob)
     elif args.graph == 'SF':
-        if args.nodes < 1:
-            print("\nMust have at least one node in the graph. Setting size to 1000.\n")
+        if args.nodes < 1 or args.nodes > max_vars:
+            print("\nSize for SF graph must be between 1 and " + str(max_vars) + ". Setting size to 1000.\n")
             args.nodes = 1000
         if args.new_edges < 0 or args.new_edges > args.nodes:
             print("\nNumber of edges must be between 1 and n. Setting to 5.\n")
@@ -106,75 +108,73 @@ def visualize_input_graph(G):
     plt.savefig('input_graph.png')
     plt.close()
 
-def build_dqm(G):
-    """ Build the DQM for the problem instance."""
+def build_cqm(G):
+    """ Build the CQM for the problem instance."""
 
     # Two groups (cases 0, 1) and one separator group (case 2)
     num_groups = 3
 
-    # Lagrange parameter on constraints
-    gamma_1 = 1
-    gamma_2 = 100
+    # Initialize the CQM object
+    print("\nBuilding CQM...")
+    cqm = ConstrainedQuadraticModel()
 
-    # Initialize the DQM object
-    print("\nBuilding DQM...")
-    dqm = DiscreteQuadraticModel()
+    # Build the CQM starting by creating variables
+    vars = [[Binary(f'x_{name}_{i}') for i in range(num_groups)] for name in G.nodes()]
 
-    # Build the DQM starting by adding variables
-    for name in G.nodes():
-        dqm.add_variable(num_groups, label=name)
+    # Set objective for CQM
+    cqm.set_objective(quicksum(vars[i][2] for i in range(len(vars))))
 
-    # Add objective to DQM
-    for name in G.nodes():
-        dqm.set_linear_case(name, 2, 1)
+    # Add constraint to make variables discrete
+    for v in range(len(vars)):
+        cqm.add_discrete([f'x_{v}_{i}' for i in range(num_groups)])
 
-    # Add constraint to DQM: |G1|=|G2|
-    all_nodes_ordered = list(G.nodes())
-    for i in range(len(all_nodes_ordered)):
-        dqm.set_linear_case(all_nodes_ordered[i], 0, gamma_1)
-        dqm.set_linear_case(all_nodes_ordered[i], 1, gamma_1)
-        for j in range(i+1, len(all_nodes_ordered)):
-            dqm.set_quadratic_case(all_nodes_ordered[i], 0, all_nodes_ordered[j], 0, 2*gamma_1)
-            dqm.set_quadratic_case(all_nodes_ordered[i], 1, all_nodes_ordered[j], 1, 2*gamma_1)
-            dqm.set_quadratic_case(all_nodes_ordered[i], 0, all_nodes_ordered[j], 1, -2*gamma_1)
-            dqm.set_quadratic_case(all_nodes_ordered[i], 1, all_nodes_ordered[j], 0, -2*gamma_1)
+    # Add constraint to CQM: |G1|=|G2|
+    g1 = [vars[i][0] for i in range(len(vars))]
+    g2 = [vars[i][1] for i in range(len(vars))]
+    cqm.add_constraint(quicksum(g1) - quicksum(g2) == 0)
 
-    # Add constraint to DQM: e(G1, G2) = 0
+    # Add constraint to CQM: e(G1, G2) = 0
+    edge_sum = []
     for a, b in G.edges():
         if a != b:
-            dqm.set_quadratic_case(a, 0, b, 1, gamma_2)
-            dqm.set_quadratic_case(a, 1, b, 0, gamma_2)
+            edge_sum.append(vars[a][0]*vars[b][1]+vars[a][1]*vars[b][0])
+    cqm.add_constraint(quicksum(edge_sum) == 0, label='cross edges')
 
-    return dqm
+    return cqm
 
-def run_dqm_and_collect_solutions(dqm, sampler):
-    """ Send the DQM to the sampler and return the best sample found."""
+def run_cqm_and_collect_solutions(cqm, sampler):
+    """ Send the CQM to the sampler and return the best sample found."""
 
     # Initialize the solver
     print("\nSending to the solver...")
     
-    # Solve the DQM problem using the solver
-    sampleset = sampler.sample_dqm(dqm, label='Example - Immunization Strategy')
+    # Solve the CQM problem using the solver
+    sampleset = sampler.sample_cqm(cqm, label='Example - Immunization Strategy')
 
-    # Get the first solution
-    sample = sampleset.first.sample
+    # Get the first feasible solution
+    feasible_sampleset = sampleset.filter(lambda d: d.is_feasible)
+    if len(feasible_sampleset) == 0:
+        print("\nNo feasible solution found. Returning best infeasible solution.")
+        return sampleset.first.sample
 
-    return sample
+    return feasible_sampleset.first.sample
 
 def process_sample(G, sample):
-    """ Interpret the DQM solution in terms of the partitioning problem."""
+    """ Interpret the CQM solution in terms of the partitioning problem."""
 
     # Display results to user
     group_1 = []
     group_2 = []
     sep_group = []
+    results = [[],[],[]]
     for key, val in sample.items():
-        if val == 0:
-            group_1.append(key)
-        elif val == 1:
-            group_2.append(key)
-        else:
-            sep_group.append(key)
+        if val == 1:
+            v = key.split("_")
+            results[int(v[-1])].append(int(v[1]))
+
+    group_1 = results[0]
+    group_2 = results[1]
+    sep_group = results[2]
 
     # Display best result
     print("\nPartition Found:")
@@ -185,7 +185,7 @@ def process_sample(G, sample):
     print("\nSeparator Fraction: \t", len(sep_group)/len(G.nodes()))
 
     # Determines if there are any edges directly between the large groups
-    illegal_edges = [(u, v) for u, v in G.edges if ({sample[u], sample[v]} == {0, 1})]
+    illegal_edges = [(u, v) for u, v in G.edges if (sample[f'x_{u}_{0}']*sample[f'x_{v}_{1}'] == 1 or sample[f'x_{u}_{1}']*sample[f'x_{v}_{0}'] == 1)]
 
     print("\nNumber of illegal edges:\t", len(illegal_edges))
 
@@ -226,10 +226,10 @@ if __name__ == '__main__':
 
     visualize_input_graph(G)
 
-    dqm = build_dqm(G)
+    cqm = build_cqm(G)
 
-    sampler = LeapHybridDQMSampler()
-    sample = run_dqm_and_collect_solutions(dqm, sampler)
+    sampler = LeapHybridCQMSampler()
+    sample = run_cqm_and_collect_solutions(cqm, sampler)
 
     group_1, group_2, sep_group, illegal_edges = process_sample(G, sample)
 
