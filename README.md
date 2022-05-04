@@ -17,7 +17,7 @@ the separator then breaks the transmission cycle, and so selecting a separator
 that contains as few individuals as possible will minimize the number of
 immunization doses required. In this example, we show how this optimization
 problem can be implemented using the Ocean SDK and solved using the hybrid
-discrete quadratic model solver available in Leap.
+constrained quadratic model solver available in Leap.
 
 ## Usage
 
@@ -48,15 +48,15 @@ functions, and the details of these functions can be found
 [here](https://networkx.org/documentation/stable//reference/generators.html#).
 
 - `karate`: Karate Club graph; a fixed graph on 34 nodes.
-- `internet`: Internet Autonomous System network; specify number of nodes 
-  between 1,000 and 3,000.
+- `internet`: Internet Autonomous System network; specify number of nodes
+  between 1,000 and 1,666.
 - `rand-reg`: A random d-regular graph; specify number of nodes and value for d.
 - `ER`: Erdos-Renyi random graph; specify number of nodes and edge probability.
 - `SF`: Barabasi-Albert scale-free graph; specify number of nodes and number of
   edges to add from a new node to any existing nodes.
 
-The default graph is the internet graph on 1,000 nodes. The largest number of 
-nodes allowed for any graph specified can be at most 3,000.
+The default graph is the internet graph on 1,000 nodes. The largest number of
+nodes allowed for any graph specified can be at most 1,666.
 
 ## Code Overview
 
@@ -67,10 +67,10 @@ broken down into the following objective and constraints.
 - Constraint 1: Large groups have equal size
 - Constraint 2: No edges between the large groups
 
-This problem can be modeled as a discrete quadratic model (DQM). We assign a
-variable for each node in the graph, and each variable has three cases: one for
-each large group and one for the separator group. A variable can be assigned to
-exactly one of those three groups.
+This problem can be modeled as a
+constrained quadratic model (CQM). For each node in the graph we define three
+binary variables: one for each large group and one for the separator group. A
+node can be assigned to exactly one of those three groups.
 
 ## References
 

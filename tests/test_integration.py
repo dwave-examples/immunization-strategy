@@ -17,7 +17,7 @@ import subprocess
 import sys
 import unittest
 import demo
-from dwave.system import LeapHybridDQMSampler
+from dwave.system import LeapHybridCQMSampler
 
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -64,11 +64,11 @@ class TestDemo(unittest.TestCase):
         """Run demo.py and check that no illegal edges are reported. This ensures the lagrange parameter is set appropriately."""
         args = demo.read_in_args(["--graph", "internet"])
         G = demo.build_graph(args)
-        dqm = demo.build_dqm(G)
-        sampler = LeapHybridDQMSampler()
-        sample = demo.run_dqm_and_collect_solutions(dqm, sampler)
+        cqm = demo.build_cqm(G)
+        sampler = LeapHybridCQMSampler()
+        sample = demo.run_cqm_and_collect_solutions(cqm, sampler)
 
-        group_1, group_2, sep_group, illegal_edges = demo.process_sample(G, sample)
+        _, _, _, illegal_edges = demo.process_sample(G, sample)
 
         self.assertEqual(len(illegal_edges), 0)
 
